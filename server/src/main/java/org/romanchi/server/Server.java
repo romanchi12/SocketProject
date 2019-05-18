@@ -1,13 +1,11 @@
-import lombok.AllArgsConstructor;
-import lombok.Builder;
+package org.romanchi.server;
+
 import lombok.Getter;
 import lombok.Setter;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
-import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.LinkedList;
 import java.util.List;
@@ -47,7 +45,7 @@ public class Server extends Thread implements AutoCloseable{
 
     @Override
     public void run(){
-        logger.info("Server has been started");
+        logger.info("org.romanchi.server.Server has been started");
         while (!isInterrupted()){
             try {
                 logger.info("Waiting for connection");
@@ -60,7 +58,7 @@ public class Server extends Thread implements AutoCloseable{
             }
         }
         close();
-        logger.info("Server has been closed");
+        logger.info("org.romanchi.server.Server has been closed");
     }
 
 

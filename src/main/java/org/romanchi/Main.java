@@ -1,3 +1,8 @@
+package org.romanchi;
+
+import org.romanchi.client.Client;
+import org.romanchi.server.Server;
+
 import java.util.LinkedList;
 import java.util.List;
 
