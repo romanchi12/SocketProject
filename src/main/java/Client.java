@@ -36,11 +36,9 @@ public class Client extends Thread implements AutoCloseable {
             send(UUID.randomUUID().toString());
             try {
                 Thread.sleep(5000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-                interrupt();
-            }
+            } catch (InterruptedException ignored) {interrupt();}
         }
+        logger.info("Client has been closed");
     }
 
     public void send(String data) {
