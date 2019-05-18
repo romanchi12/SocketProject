@@ -45,7 +45,7 @@ public class Server extends Thread implements AutoCloseable{
 
     @Override
     public void run(){
-        logger.info("org.romanchi.server.Server has been started");
+        logger.info("org.romanchi.org.romanchi.server.Server has been started");
         while (!isInterrupted()){
             try {
                 logger.info("Waiting for connection");
@@ -58,7 +58,7 @@ public class Server extends Thread implements AutoCloseable{
             }
         }
         close();
-        logger.info("org.romanchi.server.Server has been closed");
+        logger.info("org.romanchi.org.romanchi.server.Server has been closed");
     }
 
 
