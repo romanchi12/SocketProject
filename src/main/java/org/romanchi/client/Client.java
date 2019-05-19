@@ -3,13 +3,12 @@ package org.romanchi.client;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -22,11 +21,12 @@ public class Client extends Thread implements AutoCloseable {
     @Getter @Setter private FileDescriptor fileToDownload;
     private List<FilePart> fileParts;
     private File downloadedFile;
+    private FileOutputStream fileOutputStream;
     private Socket socket;
 
     @Getter private String host = "localhost";
     @Getter @Setter private int port = 8888;
-    @Getter @Setter private long filePartSize = 1024;
+    @Getter @Setter private int filePartSize = 65000;
 
     public Client(){
         socket = new Socket();
@@ -38,11 +38,16 @@ public class Client extends Thread implements AutoCloseable {
         }
     }
 
-    public void setFileToDownload(FileDescriptor fileToDownload) {
+    public void setFileToDownload(FileDescriptor fileToDownload) throws FileNotFoundException {
         this.fileToDownload = fileToDownload;
         int partsAmount = (int) (fileToDownload.getFileSize()/filePartSize);
+        logger.info("PARTS AMOUNT: " + partsAmount);
         fileParts = new ArrayList(partsAmount);
-        downloadedFile = new File(fileToDownload.getFileName());
+        for(int i = 0; i < partsAmount; i++){
+            fileParts.add(FilePart.builder().id(i).build());
+        }
+        downloadedFile = new File("downloadedFile.png");
+        fileOutputStream = new FileOutputStream(downloadedFile);
     }
 
     private String getRequest(){
@@ -60,11 +65,35 @@ public class Client extends Thread implements AutoCloseable {
         logger.info("org.romanchi.org.romanchi.client.Client has bean started");
         while(!isInterrupted()){
             send(getRequest());
-            try {
+            read();
+            /*try {
                 Thread.sleep(5000);
-            } catch (InterruptedException ignored) {interrupt();}
+            } catch (InterruptedException ignored) {interrupt();}*/
+        }
+        try {
+            fileOutputStream.flush();
+            fileOutputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
         logger.info("org.romanchi.org.romanchi.client.Client has been closed");
+    }
+
+    public void read(){
+        try {
+            InputStream inputStream = socket.getInputStream();
+            byte[] buffer = new byte[filePartSize + 100];
+            int dataLength = inputStream.read(buffer);
+            String data = new String(buffer, 0, dataLength);
+            logger.info("CLIENT READ: " + data);
+            Integer index = Integer.valueOf(data.substring(0, data.indexOf("@")));
+            fileOutputStream.write(buffer, index, dataLength - index);
+            fileOutputStream.flush();
+            fileParts.get(index).setPresent(true);
+            logger.info("INDEX: " + index);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void send(String data) {
