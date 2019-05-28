@@ -19,7 +19,7 @@ public class Server extends Thread implements AutoCloseable{
     private ServerSocket socket;
     private List<Responser> clients;
 
-    @Getter @Setter private String host = "localhost";
+    @Getter @Setter private String host = "77.47.205.79";
     @Getter @Setter private int port = 8888;
 
     public Server() {
@@ -45,13 +45,16 @@ public class Server extends Thread implements AutoCloseable{
 
     @Override
     public void run(){
-        logger.info("org.romanchi.org.romanchi.server.Server has been started");
+        logger.info("org.romanchi.org.romanchi.server.Server has been started " + host + "  " + port);
         while (!isInterrupted()){
             try {
-                logger.info("Waiting for connection");
-                Responser responser = new Responser(socket.accept());
+                final String[] connectedClientsMesssage = {""};
+                clients.forEach(client -> connectedClientsMesssage[0] += (client.toString()));
+                logger.info("Connected clients: " + connectedClientsMesssage[0]);
+                logger.info("Waiting for new connection");
+                Responser responser = new NormalResponser(socket.accept());
                 clients.add(responser);
-                responser.start();
+                new Thread(responser).start();
             } catch (IOException e) {
                 e.printStackTrace();
                 logger.info("Connection establishing failed");

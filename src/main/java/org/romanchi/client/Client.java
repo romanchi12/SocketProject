@@ -24,11 +24,13 @@ public class Client extends Thread implements AutoCloseable {
     private FileOutputStream fileOutputStream;
     private Socket socket;
 
-    @Getter private String host = "localhost";
+    @Getter private String host = "77.47.205.79";
     @Getter @Setter private int port = 8888;
     @Getter @Setter private int filePartSize = 65000;
+    PrintWriter out;
+    BufferedReader in;
 
-    public Client(){
+    public Client() throws IOException {
         socket = new Socket();
         SocketAddress socketAddress = new InetSocketAddress(host, port);
         try {
@@ -36,6 +38,8 @@ public class Client extends Thread implements AutoCloseable {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        out = new PrintWriter(socket.getOutputStream());
+        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
     }
 
     public void setFileToDownload(FileDescriptor fileToDownload) throws FileNotFoundException {
@@ -57,7 +61,7 @@ public class Client extends Thread implements AutoCloseable {
                     .map(filePart -> String.valueOf(filePart.getId()))
                     .collect(Collectors.joining(","));
         }
-        return "";
+        return "Hello serverok";
     }
 
     @Override
@@ -65,46 +69,31 @@ public class Client extends Thread implements AutoCloseable {
         logger.info("org.romanchi.org.romanchi.client.Client has bean started");
         while(!isInterrupted()){
             send(getRequest());
-            read();
-            /*try {
-                Thread.sleep(5000);
-            } catch (InterruptedException ignored) {interrupt();}*/
-        }
-        try {
-            fileOutputStream.flush();
-            fileOutputStream.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+            String data = null;
+            try {
+                data = read();
+                logger.info("CLIENT READ: " + data);
+                Thread.sleep(1000);
+            } catch (IOException | InterruptedException e) {
+                e.printStackTrace();
+            }
+
         }
         logger.info("org.romanchi.org.romanchi.client.Client has been closed");
     }
 
-    public void read(){
-        try {
-            InputStream inputStream = socket.getInputStream();
-            byte[] buffer = new byte[filePartSize + 100];
-            int dataLength = inputStream.read(buffer);
-            String data = new String(buffer, 0, dataLength);
-            logger.info("CLIENT READ: " + data);
-            Integer index = Integer.valueOf(data.substring(0, data.indexOf("@")));
-            fileOutputStream.write(buffer, index, dataLength - index);
-            fileOutputStream.flush();
-            fileParts.get(index).setPresent(true);
-            logger.info("INDEX: " + index);
-        } catch (IOException e) {
-            e.printStackTrace();
+    private String read() throws IOException {
+        String request, response;
+        while ((request = in.readLine()) != null){
+            logger.info("request: " + request);
         }
+        return "werw";
     }
 
     public void send(String data) {
-        try {
-            logger.info("CLIENT SENDED: " + data);
-            OutputStream os = socket.getOutputStream();
-            os.write(data.getBytes());
-            os.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        logger.info("CLIENT SENDED: " + data);
+        out.write(data);
+        out.flush();
     }
 
     @Override
