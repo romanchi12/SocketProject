@@ -19,7 +19,8 @@ public class EchoIOServer {
         String fileName = properties.getProperty("server.file.path");
         int bufferSize = Integer.valueOf(properties.getProperty("server.buffer.size"));
         File file = new File(fileName);
-        int filePartSize = (int)file.length()/bufferSize;
+        DataInputStream dataInputStream = new DataInputStream(new FileInputStream(file));
+        System.out.println("[server] file length " + file.length());
         try (ServerSocket serverSocket = new ServerSocket()) {
             serverSocket.bind(new InetSocketAddress(hostName, portNumber));
             System.out.println("Waiting connections on " + hostName + ":" + portNumber);
@@ -32,12 +33,24 @@ public class EchoIOServer {
                         BufferedReader in = new BufferedReader(
                                 new InputStreamReader(clientSocket.getInputStream()));
 
-                        String request, response;
+                        String request;
                         while (!clientSocket.isClosed() && ((request = in.readLine()) != null)) {
-                            response = processRequest(request);
-                            out.println(response);
-                            if ("Done".equals(request)) {
-                                break;
+                            if(request.equals("get")){
+                                byte [] buffer = new byte[bufferSize];
+                                int readed;
+                                int acumulated = 0;
+                                out.write("length " + file.length());
+                                out.flush();
+                                while ((readed = dataInputStream.read(buffer)) > 0){
+                                    clientSocket.getOutputStream().write(buffer, 0, readed);
+                                    acumulated += readed;
+                                    System.out.println("[server] Uploading .... " + ((float)(acumulated)/file.length()) * 100 + "%");
+                                }
+                                clientSocket.getOutputStream().flush();
+                                clientSocket.getOutputStream().write("password".getBytes());
+                                clientSocket.getOutputStream().flush();
+                            }else{
+                                System.out.println("No get command");
                             }
                         }
                         if(!clientSocket.isClosed()){

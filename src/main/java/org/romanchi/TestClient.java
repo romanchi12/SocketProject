@@ -31,17 +31,43 @@ public class TestClient {
         String threadName = Thread.currentThread().getName();
         String[] messages = new String[] { threadName + " > msg1", threadName + " > msg2", threadName + " > msg3", threadName +
                 " > Done" };
-
+        String fileName = properties.getProperty("client.file.saveto");
+        int bufferSize = Integer.valueOf(properties.getProperty("client.buffer.size"));
+        File file = new File(fileName);
+        DataOutputStream dataOutputStream = new DataOutputStream(new FileOutputStream(file));
         try {
             Socket echoSocket = new Socket(hostName, portNumber);
             PrintWriter out = new PrintWriter(echoSocket.getOutputStream(), true);
             BufferedReader in = new BufferedReader(new InputStreamReader(echoSocket.getInputStream()));
-            for (String message : messages) {
+            for (String ignored : messages) {
                 Scanner stdIn = new Scanner(System.in);
                 String userInput;
                 while ((userInput = stdIn.next()) != null) {
                     out.println(userInput);
-                    System.out.println("echo: " + in.readLine());
+                    if(userInput.equals("get")){
+                        byte[] buffer = new byte[bufferSize];
+                        int readed;
+                        int fileLength = 0;
+                        int acumulated = 0;
+                        while((readed = echoSocket.getInputStream().read(buffer)) > 0){
+                            if("password".contains(new String(buffer, 0, readed))){
+                                System.out.println("ending");
+                                dataOutputStream.flush();
+                                dataOutputStream.close();
+                                break;
+                            }
+                            if(new String(buffer, 0, readed).startsWith("length")){
+                                fileLength = Integer.valueOf(
+                                        new String(buffer, 0, readed).split(" ")[1]);
+                                System.out.println("file length " + fileLength);
+                                continue;
+                            }
+                            dataOutputStream.write(buffer, 0, readed);
+                            dataOutputStream.flush();
+                            acumulated += readed;
+                            System.out.println("[client] Downloading .... " + ((float) acumulated / fileLength) * 100 + "%");
+                        }
+                    }
                 }
             }
         } catch (UnknownHostException e) {
