@@ -6,7 +6,6 @@ import java.net.UnknownHostException;
 import java.util.Properties;
 import java.util.Scanner;
 
-
 public class TestClient {
     public static void main(String[] args) {
 
@@ -18,7 +17,7 @@ public class TestClient {
             }
         };
         new Thread(client, "client-A").start();
-        new Thread(client, "client-B").start();
+
     }
 
 
@@ -65,7 +64,8 @@ public class TestClient {
                             dataOutputStream.write(buffer, 0, readed);
                             dataOutputStream.flush();
                             acumulated += readed;
-                            System.out.println("[client] Downloading .... " + ((float) acumulated / fileLength) * 100 + "%");
+                            double percent = ((float) acumulated / fileLength) * 100;
+                            System.out.println("[client] Downloading .... " +  (percent > 100 ? 100: percent)+ "%");
                         }
                     }
                 }
